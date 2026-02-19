@@ -2,6 +2,20 @@ import xarray as xr
 import numpy as np
 from scipy import stats
 import scipy.stats as stats
+import pandas as pd
+
+def latlon(ds):
+    lat_str = ''
+    lon_str = ''
+    other_dims_str = []
+    for dim in ds.dims:
+        if dim in ['lat', 'latitude']:
+            lat_str = dim
+        elif dim in ['lon', 'longitude']:
+            lon_str = dim
+        else:
+            other_dims_str.append(dim)
+    return lat_str,lon_str
 
 def clim(ds,season='annual',imon=1,iyr=1979,fmon=12,fyr=2005):
     """
@@ -90,7 +104,7 @@ def trend_vect(x,y,dim):
     
     You can also use a loop on lon/lat but way longer!-> spatial_regression()
     '''
-    print('trend-0','intercept-1','rvalue-2','pvalue-3','stderr-4')
+    #print('trend-0','intercept-1','rvalue-2','pvalue-3','stderr-4')
     return xr.apply_ufunc(
         stats.linregress, x, y,
         input_core_dims=[[dim], [dim]],
@@ -180,3 +194,35 @@ def seasonal_selection(ds,season='MA',iyr=1979,fyr=2005):
     #seasonal_values.attrs['period'] = str(field0[0]['time.year'].values) + '-' + str(field0[-1]['time.year'].values)
     #seasonal_anomalies.attrs['period'] = str(field0[0]['time.year'].values) + '-' + str(field0[-1]['time.year'].values)
     return seasonal_values,seasonal_anomalies
+
+def monthly_selection(ds,season,iyr,fyr):
+    #https://stackoverflow.com/questions/60791186/select-xarray-dataset-based-on-month
+    # Use .groupby('time.month') to organize the data into months
+    # then use .groups to extract the indices for each month
+    if isinstance(season, int):
+        rmon=season
+        #print(season_sel)
+    elif isinstance(season, str) and season[0]=='m':
+        rmon=int(season.split('mon')[1])
+    lat_str,lon_str=latlon(ds)
+    field_period=ds.sel(time=slice(str(iyr)+"-"+str(1), str(fyr)+"-"+str(12)))
+    time_ar=pd.date_range(start=str(iyr)+'-01',end=str(fyr+1)+'-01',freq='YS')
+    month_idxs=field_period.groupby('time.month').groups
+    # Extract the time indices corresponding to all the Januarys
+    selmon_idxs=month_idxs[rmon]
+    # Extract the january months by selecting
+    valsmon=field_period.isel(time=selmon_idxs)
+    anomsmon=valsmon-valsmon.mean('time')
+    if len(ds.dims)==3:
+        valsmon= xr.DataArray(data=valsmon, dims=["time",ds.dims[1],ds.dims[2]],
+            coords=[valsmon.time,valsmon.coords[ds.dims[1]],valsmon.coords[ds.dims[2]]])
+        anomsmon= xr.DataArray(data=anomsmon, dims=["time",ds.dims[1],ds.dims[2]],
+            coords=[anomsmon.time,anomsmon.coords[ds.dims[1]],anomsmon.coords[ds.dims[2]]])
+    elif len(ds.dims)==4:
+        valsmon= xr.DataArray(data=valsmon, dims=["time",ds.dims[1],ds.dims[2],ds.dims[3]],
+            coords=[valsmon.time,valsmon.coords[ds.dims[1]],valsmon.coords[ds.dims[2]],valsmon.coords[ds.dims[3]]])
+        anomsmon= xr.DataArray(data=anomsmon, dims=["time",ds.dims[1],ds.dims[2],ds.dims[3]],
+            coords=[anomsmon.time,anomsmon.coords[ds.dims[1]],anomsmon.coords[ds.dims[2]],anomsmon.coords[ds.dims[3]]])
+    #time_ar=pd.date_range(start=str(iyr)+'-01',end=str(fyr+1)+'-01',freq='M')
+    return valsmon,anomsmon    #time_ar=pd.date_range(start=str(iyr)+'-01',end=str(fyr+1)+'-01',freq='M')
+
