@@ -1,4 +1,4 @@
-
+import xarray as xr
 
 def coord_domain(domain):
     """
@@ -218,6 +218,16 @@ def field_dom(ds,domain):
             lon_str = dim
         else:
             other_dims_str.append(dim)
-    field = ds.where((latS < ds.coords[lat_str]) & ( ds.coords[lat_str] < latN) & (lonW < ds.coords[lon_str]) & ( ds.coords[lon_str] < lonE),drop=True)
+
+    if ds[lat_str][0] > ds[lat_str][-1]:
+        lat_slice = slice(latN, latS)  # décroissant
+    else:
+        lat_slice = slice(latS, latN)  # croissant
+    
+    #field = ds.where((latS < ds.coords[lat_str]) & ( ds.coords[lat_str] < latN) & (lonW < ds.coords[lon_str]) & ( ds.coords[lon_str] < lonE),drop=True)
+    field = ds.sel(
+        {lat_str: lat_slice,
+         lon_str: slice(lonW, lonE)}
+    )
     #print('Domain;latS,latN,lonW,lonE:',domain,latS,latN,lonW,lonE)
     return field
