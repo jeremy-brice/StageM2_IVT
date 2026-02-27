@@ -41,16 +41,16 @@ def coord_domain(domain):
     # CH: Central and Est Himalaya
     # TB: Tibetan Plateau
     elif domain in ['HK']:
-        latS = 31;latN = 40;lonW=70;lonE=81
+        latS = 34;latN = 41;lonW=64;lonE=76
         lonlim = slice(70, 81);latlim = slice(31, 40)
     elif domain in ['CH']:
-        latS = 23;latN = 30.5;lonW=79;lonE=98
+        latS = 23;latN = 30.5;lonW=79;lonE=91.5
         lonlim= slice(79, 98);latlim= slice(26, 31)
     elif domain in ['TP']:
-        latS = 30.5;latN = 38;lonW=82;lonE=102
+        latS = 30.5;latN = 38;lonW=80;lonE=102
         lonlim= slice(81, 104);latlim= slice(31, 39)
     elif domain in ['SEH']:
-        latS = 20;latN = 30;lonW=98;lonE=110
+        latS = 20;latN = 30;lonW=91.5;lonE=110
         lonlim= slice(81, 104);latlim= slice(31, 39)
     elif domain in ['MARMer','GRa']:
         latS = 25;latN = 31;lonW=80;lonE=90
