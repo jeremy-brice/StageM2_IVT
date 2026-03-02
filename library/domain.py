@@ -1,5 +1,18 @@
 import xarray as xr
 
+def reversing_lat(ds):
+    lat_str = ''
+    lon_str = ''
+    other_dims_str = []
+    for dim in ds.dims:
+        if dim in ['lat', 'lon']:
+            dsO= ds.reindex(lat=list(reversed(ds.lat)))
+        elif dim in ['latitude', 'longitude']:
+            dsO= ds.reindex(latitude=list(reversed(ds.latitude)))
+        else:
+            other_dims_str.append(dim)
+    return dsO
+
 def coord_domain(domain):
     """
         Get the latitude and longitude limits for the corresponding zone.
