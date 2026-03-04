@@ -16,11 +16,11 @@ iyear=1981
 fyear=2015
 dom='HMA'
 latS,latN,lonW,lonE,latlim,lonlim = coord_domain('HMA')
-models = ['APHRO','GPCP','CRU','CHIRPS','HARv2','ERA5']
+models = ['APHRO','GPCP','CRU','HARv2','ERA5']
 
 #=================  Saving netCDF files ========================
 
-output_dir = '/bettik/PROJECTS/pr-regional-climate/bricej/'
+output_dir = '/bettik/PROJECTS/pr-regional-climate/bricej/climbas/'
 
 #=================  tp Data loading ========================
 
@@ -66,14 +66,14 @@ field3=field3.sel(time=slice(str(iyear),str(fyear)))
 
 #####################  CHIRPS  #####################################
 
-model4='chirps'
-res4='0.05°x0.05°'
-
-ds4 = xr.open_dataset('/bettik/PROJECTS/pr-regional-climate/santolam/chirps/chirps-v2.0.monthly.nc')['precip']
-ds4=ds4.rename({'latitude':'lat','longitude':'lon'})
-ds4=reversing_lat(ds4)
-field4=field_dom(ds4,dom)
-field4=field4.sel(time=slice(str(iyear),str(fyear)))
+#model4='chirps'
+#res4='0.05°x0.05°'
+#
+#ds4 = xr.open_dataset('/bettik/PROJECTS/pr-regional-climate/santolam/chirps/chirps-v2.0.monthly.nc')['precip']
+#ds4=ds4.rename({'latitude':'lat','longitude':'lon'})
+#ds4=reversing_lat(ds4)
+#field4=field_dom(ds4,dom)
+#field4=field4.sel(time=slice(str(iyear),str(fyear)))
 
 #####################  HARv2  #####################################
 
@@ -128,7 +128,7 @@ field6=field_dom(ds6,dom)
 tp_mean1 = field1.mean(dim='time', skipna=True)
 tp_mean2 = field2.mean(dim='time', skipna=True)
 tp_mean3 = field3.mean(dim='time', skipna=True)
-tp_mean4 = field4.mean(dim='time', skipna=True)
+#tp_mean4 = field4.mean(dim='time', skipna=True)
 tp_mean5 = field5.mean(dim='time', skipna=True)
 tp_mean6 = field6.mean(dim='time', skipna=True)
 
@@ -136,9 +136,8 @@ tp_mean_dict = {
     models[0]: tp_mean1,
     models[1]: tp_mean2,
     models[2]: tp_mean3,
-    models[3]: tp_mean4,
-    models[4]: tp_mean5,
-    models[5]: tp_mean6}
+    models[3]: tp_mean5,
+    models[4]: tp_mean6}
 
 #Save
 
@@ -152,6 +151,8 @@ for model, data in tp_mean_dict.items():
     filename = f"{output_dir}/spatial_mean_tp_annual_{dom}_{iyear}-{fyear}_{model}.nc"
     
     ds.to_netcdf(filename)
+
+    print(f'Saved file : {filename}')
 
 
 

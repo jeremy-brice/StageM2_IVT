@@ -20,7 +20,7 @@ models = ['APHRO','GPCP','CRU','CHIRPS','HARv2','ERA5']
 
 #=================  Saving netCDF files ========================
 
-output_dir = '/bettik/PROJECTS/pr-regional-climate/bricej/'
+output_dir = '/bettik/PROJECTS/pr-regional-climate/bricej/climbas/'
 
 #=================  tp Data loading ========================
 
@@ -152,6 +152,8 @@ for model, data in tp_mean_dict.items():
     filename = f"{output_dir}/spatial_mean_tp_annual_{dom}_{iyear}-{fyear}_{model}.nc"
     
     ds.to_netcdf(filename)
+
+    print(f'Saved file : {filename}')
 
 
 
