@@ -175,6 +175,7 @@ def seasonal_selection_chunk(ds, season='annual', iyr=1979, fyr=2005):
             print(f"(D- {iyr-1}  JF- {iyr}  to D- {fyr-1}  JF- {fyr})")
         else:
             seasonal_values = ds_sel.groupby("time.year").mean("time")
+            seasonal_values = seasonal_values.rename({"year": "time"})
 
     else:
         raise ValueError("Invalid season argument")
