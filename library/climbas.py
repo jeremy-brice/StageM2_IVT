@@ -112,84 +112,58 @@ def trend_vect(x,y,dim):
         vectorize=True
         )
 
-def seasonal_selection_chunk(ds, season='annual', iyr=1979, fyr=2005):
+def seasonal_selection2(ds, season_months=[1,2,3], iyr=1979, fyr=2005):
     """
-    Compute seasonal means and anomalies from monthly data.
-    
+    Compute seasonal means from monthly data.
+
     Parameters
     ----------
     ds : xarray.DataArray
         Monthly data with dimension 'time'
-    season : 'annual', int, or str
-        - 'annual'
-        - int (1=Jan, ..., 12=Dec)
-        - str like 'DJF', 'MAM', 'JJAS', etc.
+    season_months : list of int
+        Months defining the season (1=Jan ... 12=Dec)
+        Example:
+            JJAS -> [6,7,8,9]
+            DJF  -> [12,1,2]
+            DJFM -> [12,1,2,3]
     iyr, fyr : int
         Start and end year
-    
+
     Returns
     -------
-    seasonal_values : DataArray (year, lat, lon)
-    seasonal_anomalies : DataArray (year, lat, lon)
+    seasonal_values : DataArray (time, lat, lon)
     """
 
-    # ---- Select extended period (needed for DJF)
+    # ---- Select extended period (needed if season crosses year boundary)
     ds = ds.sel(time=slice(f"{iyr-1}-12", f"{fyr}-12"))
 
     month = ds['time.month']
     year = ds['time.year']
 
-    # =====================
-    # ANNUAL
-    # =====================
-    if season == 'annual':
-        seasonal_values = ds.groupby("time.year").mean("time")
-        seasonal_values = seasonal_values.rename({"year": "time"})
+    # ---- Select the months of the season
+    ds_sel = ds.where(month.isin(season_months), drop=True)
 
-    # =====================
-    # SINGLE MONTH
-    # =====================
-    elif isinstance(season, int):
-        ds_sel = ds.where(month == season, drop=True)
+    # ---- Check if season crosses year boundary (Dec + Jan)
+    if 12 in season_months and 1 in season_months:
+
+        season_year = xr.where(ds_sel['time.month'] == 12,
+                               ds_sel['time.year'] + 1,
+                               ds_sel['time.year'])
+
+        ds_sel = ds_sel.assign_coords(season_year=season_year)
+
+        seasonal_values = ds_sel.groupby("season_year").mean("time")
+        seasonal_values = seasonal_values.rename({"season_year": "time"})
+        
+    else:
+
         seasonal_values = ds_sel.groupby("time.year").mean("time")
         seasonal_values = seasonal_values.rename({"year": "time"})
 
-    # =====================
-    # SEASON STRING (DJF, MAM, JJAS, etc.)
-    # =====================
-    elif isinstance(season, str):
-
-        season_str = "JFMAMJJASOND"
-        months = [season_str.index(m) + 1 for m in season]
-
-        ds_sel = ds.where(month.isin(months), drop=True)
-
-        # ---- If season crosses year boundary (e.g., DJF)
-        if 12 in months and 1 in months:
-            season_year = xr.where(ds_sel['time.month'] == 12,
-                                   ds_sel['time.year'] + 1,
-                                   ds_sel['time.year'])
-            ds_sel = ds_sel.assign_coords(season_year=season_year)
-            seasonal_values = ds_sel.groupby("season_year").mean("time")
-            seasonal_values = seasonal_values.rename({"season_year": "time"})
-            print(f"(D- {iyr-1}  JF- {iyr}  to D- {fyr-1}  JF- {fyr})")
-        else:
-            seasonal_values = ds_sel.groupby("time.year").mean("time")
-            seasonal_values = seasonal_values.rename({"year": "time"})
-
-    else:
-        raise ValueError("Invalid season argument")
-
     # ---- Restrict final years
     seasonal_values = seasonal_values.sel(time=slice(iyr, fyr))
-
-    # ---- Climatology
-    clim = seasonal_values.mean("time")
-
-    # ---- Anomalies
-    seasonal_anomalies = seasonal_values - clim
-
-    return seasonal_values, seasonal_anomalies
+    
+    return seasonal_values
 
 def seasonal_selection(ds,season='MA',iyr=1979,fyr=2005):
     """
