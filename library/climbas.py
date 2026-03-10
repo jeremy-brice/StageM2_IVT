@@ -89,7 +89,7 @@ def clim(ds,season='annual',imon=1,iyr=1979,fmon=12,fyr=2005):
                 - any character string (ex: 'DJF', 'JJAS', etc.)")
                 """
                 )
-    clim=field0.sel(time=season_sel).mean('time')
+    clim=field0.sel(time=season_sel).mean(dim='time', skipna=True)
     #clim.attrs['period'] = str(field0[0]['time.year'].values) + '-' + str(ds[-1]['time.year'].values)
     return clim
 
@@ -111,6 +111,34 @@ def trend_vect(x,y,dim):
         output_core_dims=[[], [], [], [], []],
         vectorize=True
         )
+
+def annual_selection2(ds, iyr=1979, fyr=2005):
+    """
+    Compute annual means from monthly data.
+
+    Parameters
+    ----------
+    ds : xarray.DataArray
+        Monthly data with dimension 'time'
+
+    iyr, fyr : int
+        Start and end year
+
+    Returns
+    -------
+    annual_values : DataArray (time, lat, lon)
+    """
+
+    # ---- Select extended period (needed if season crosses year boundary)
+    ds = ds.sel(time=slice(f"{iyr-1}-12", f"{fyr}-12"))
+
+    annual_values = ds.groupby("time.year").mean(dim='time', skipna=True)
+    annual_values = annual_values.rename({"year": "time"})
+
+    # ---- Restrict final years
+    annual_values = annual_values.sel(time=slice(iyr, fyr))
+    
+    return annual_values
 
 def seasonal_selection2(ds, season_months=[1,2,3], iyr=1979, fyr=2005):
     """
@@ -152,12 +180,12 @@ def seasonal_selection2(ds, season_months=[1,2,3], iyr=1979, fyr=2005):
 
         ds_sel = ds_sel.assign_coords(season_year=season_year)
 
-        seasonal_values = ds_sel.groupby("season_year").mean("time")
+        seasonal_values = ds_sel.groupby("season_year").mean(dim='time', skipna=True)
         seasonal_values = seasonal_values.rename({"season_year": "time"})
         
     else:
 
-        seasonal_values = ds_sel.groupby("time.year").mean("time")
+        seasonal_values = ds_sel.groupby("time.year").mean(dim='time', skipna=True)
         seasonal_values = seasonal_values.rename({"year": "time"})
 
     # ---- Restrict final years
