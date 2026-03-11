@@ -23,7 +23,7 @@ ds = ds.sel(time=slice(f"{iyear}-01-01", f"{fyear}-12-31"))
 tp=field_dom(ds,dom)
 
 tp_year=tp.groupby('time.year').mean(dim='time', skipna=True)['tp']
-tp_mean=tp_year.mean(dim=['lat','lon'])
+tp_mean=tp_year.mean(dim=['lat','lon'], skipna=True)
 
 Mean = np.mean(tp_mean.values)
 Std = np.std(tp_mean.values)
@@ -73,7 +73,7 @@ end_year = fyear
 for season in seasons:
     
     tp_season = seasonal_selection2(tp['tp'], seasons[season], start_year, end_year)
-    tp_mean=tp_season.mean(dim=['lat','lon'])
+    tp_mean=tp_season.mean(dim=['lat','lon'], skipna=True)
 
     Mean = np.mean(tp_mean.values)
     Std = np.std(tp_mean.values)

@@ -17,13 +17,33 @@ dom   = sys.argv[3]
 
 #===================  ANNUAL ==============================
 
-ds=xr.open_dataset('/bettik/PROJECTS/pr-regional-climate/bricej/tp_datasets/tp_HMA_1951-2015_APHRO.nc')
+latS,latN,lonW,lonE = coord_domain(dom)
+ds=xr.open_dataset('/bettik/PROJECTS/pr-regional-climate/bricej/tp_datasets/tp_HMA_1980-2023_HARv2.nc')
 ds = ds.sel(time=slice(f"{iyear}-01-01", f"{fyear}-12-31"))
 
-tp=field_dom(ds,dom)
+def xy_sel_dom(ds,latS,latN,lonW,lonE):
+    #latS,latN,lonW,lonE=coord_domain(domain)
+    lat_str = ''
+    lon_str = ''
+    other_dims_str = []
+    for dim in ds.coords:
+        print(dim)
+        if dim in ['lat', 'latitude','LON']:
+            lat_str = dim
+        elif dim in ['lon', 'longitude','LAT']:
+            lon_str = dim
+        else:
+            other_dims_str.append(dim)
+    mask = (
+        (latS < ds[lat_str]) & ( ds[lat_str] < latN) 
+    & (lonW < ds[lon_str]) & ( ds[lon_str] < lonE)
+    )
+    field_dom=ds.where(mask,drop=True)
+    return field_dom
+tp=xy_sel_dom(ds,latS,latN,lonW,lonE)
 
 tp_year=tp.groupby('time.year').mean(dim='time', skipna=True)['tp']
-tp_mean=tp_year.mean(dim=['lat','lon'], skipna=True)
+tp_mean=tp_year.mean(dim=['south_north', 'west_east'], skipna=True)
 
 Mean = np.mean(tp_mean.values)
 Std = np.std(tp_mean.values)
@@ -54,11 +74,11 @@ time_series = pd.DataFrame({
     "trend": trend
 })
 
-time_series.to_csv(f"/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_annual_{dom}_{iyear}-{fyear}_APHRO.csv", index=False)
-stats_series.to_csv(f"/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_annual_{dom}_{iyear}-{fyear}_APHRO.csv")
+time_series.to_csv(f"/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_annual_{dom}_{iyear}-{fyear}_HARv2.csv", index=False)
+stats_series.to_csv(f"/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_annual_{dom}_{iyear}-{fyear}_HARv2.csv")
 
-print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_annual_{dom}_{iyear}-{fyear}_APHRO.csv')
-print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_annual_{dom}_{iyear}-{fyear}_APHRO.csv')
+print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_annual_{dom}_{iyear}-{fyear}_HARv2.csv')
+print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_annual_{dom}_{iyear}-{fyear}_HARv2.csv')
 
 #=================== SEASONAL =================================
 
@@ -73,7 +93,7 @@ end_year = fyear
 for season in seasons:
     
     tp_season = seasonal_selection2(tp['tp'], seasons[season], start_year, end_year)
-    tp_mean=tp_season.mean(dim=['lat','lon'], skipna=True)
+    tp_mean=tp_season.mean(dim=['south_north', 'west_east'], skipna=True)
 
     Mean = np.mean(tp_mean.values)
     Std = np.std(tp_mean.values)
@@ -103,10 +123,10 @@ for season in seasons:
     "trend": trend
     })
     
-    time_series.to_csv(f'/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_{season}_{dom}_{iyear}-{fyear}_APHRO.csv', index=False)
-    stats_series.to_csv(f'/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_{season}_{dom}_{iyear}-{fyear}_APHRO.csv')
+    time_series.to_csv(f'/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_{season}_{dom}_{iyear}-{fyear}_HARv2.csv', index=False)
+    stats_series.to_csv(f'/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_{season}_{dom}_{iyear}-{fyear}_HARv2.csv')
 
-    print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_{season}_{dom}_{iyear}-{fyear}_APHRO.csv')
-    print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_{season}_{dom}_{iyear}-{fyear}_APHRO.csv')
+    print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_{season}_{dom}_{iyear}-{fyear}_HARv2.csv')
+    print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_{season}_{dom}_{iyear}-{fyear}_HARv2.csv')
 
     

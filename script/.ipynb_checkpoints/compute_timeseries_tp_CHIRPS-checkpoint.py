@@ -17,7 +17,7 @@ dom   = sys.argv[3]
 
 #===================  ANNUAL ==============================
 
-ds=xr.open_dataset('/bettik/PROJECTS/pr-regional-climate/bricej/tp_datasets/tp_HMA_1951-2015_APHRO.nc')
+ds=xr.open_dataset('/bettik/PROJECTS/pr-regional-climate/bricej/tp_datasets/tp_HMA_1981-2025_CHIRPS.nc')
 ds = ds.sel(time=slice(f"{iyear}-01-01", f"{fyear}-12-31"))
 
 tp=field_dom(ds,dom)
@@ -54,11 +54,11 @@ time_series = pd.DataFrame({
     "trend": trend
 })
 
-time_series.to_csv(f"/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_annual_{dom}_{iyear}-{fyear}_APHRO.csv", index=False)
-stats_series.to_csv(f"/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_annual_{dom}_{iyear}-{fyear}_APHRO.csv")
+time_series.to_csv(f"/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_annual_{dom}_{iyear}-{fyear}_CHIRPS.csv", index=False)
+stats_series.to_csv(f"/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_annual_{dom}_{iyear}-{fyear}_CHIRPS.csv")
 
-print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_annual_{dom}_{iyear}-{fyear}_APHRO.csv')
-print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_annual_{dom}_{iyear}-{fyear}_APHRO.csv')
+print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_annual_{dom}_{iyear}-{fyear}_CHIRPS.csv')
+print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_annual_{dom}_{iyear}-{fyear}_CHIRPS.csv')
 
 #=================== SEASONAL =================================
 
@@ -103,10 +103,10 @@ for season in seasons:
     "trend": trend
     })
     
-    time_series.to_csv(f'/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_{season}_{dom}_{iyear}-{fyear}_APHRO.csv', index=False)
-    stats_series.to_csv(f'/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_{season}_{dom}_{iyear}-{fyear}_APHRO.csv')
+    time_series.to_csv(f'/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_{season}_{dom}_{iyear}-{fyear}_CHIRPS.csv', index=False)
+    stats_series.to_csv(f'/bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_{season}_{dom}_{iyear}-{fyear}_CHIRPS.csv')
 
-    print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_{season}_{dom}_{iyear}-{fyear}_APHRO.csv')
-    print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_{season}_{dom}_{iyear}-{fyear}_APHRO.csv')
+    print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/timeseries_tp_{season}_{dom}_{iyear}-{fyear}_CHIRPS.csv')
+    print(f'Saved : /bettik/PROJECTS/pr-regional-climate/bricej/results/timeseries/stats_tp_{season}_{dom}_{iyear}-{fyear}_CHIRPS.csv')
 
     
