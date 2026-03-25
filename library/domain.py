@@ -36,7 +36,10 @@ def coord_domain(domain):
     # North Hemisphere
     elif domain in ['NH']:
         latS = 0;latN = 90;lonW=-180;lonE=180
-        
+
+    elif domain in ['NHe']:
+        latS = 0;latN = 90;lonW=0;lonE=180    
+    
     elif domain in ['SH']:
         latS=-90;latN=-20;lonW=-180;lonE=180
         
@@ -55,6 +58,9 @@ def coord_domain(domain):
     # TB: Tibetan Plateau
     elif domain in ['HK']:
         latS = 34;latN = 41;lonW=64;lonE=76
+
+    elif domain in ['HK+']:
+        latS = 34;latN = 45;lonW=60;lonE=76
         
     elif domain in ['CH']:
         latS = 23;latN = 30.5;lonW=80;lonE=91.5
