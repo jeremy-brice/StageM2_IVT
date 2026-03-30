@@ -52,6 +52,9 @@ def coord_domain(domain):
     # High Mountain of Asia (HMA)
     elif domain in ['HMA','GRh']:
         latS = 20;latN = 45;lonW=60;lonE=110
+
+    elif domain in ['HMA+']:
+        latS = 10;latN = 45;lonW=60;lonE=105
         
     # HK: Hindu-Kush / Karakoram / Western Himalay
     # CH: Central and Est Himalaya
