@@ -112,6 +112,34 @@ def trend_vect(x,y,dim):
         vectorize=True
         )
 
+def trend_vect_na(x, y, dim):
+    '''
+    Compute the spatial trend vectorized, instead of grid by grid.
+    ex:
+    par = trend_vect(vals.time, vals, 'time')
+
+    Identique à la version originale MAIS gère les NaN :
+    - ignore les NaN dans la régression
+    - retourne NaN si pas assez de points valides
+    '''
+
+    def linregress_nan(x1, y1):
+        mask = np.isfinite(x1) & np.isfinite(y1)
+        
+        # Pas assez de points → NaN
+        if mask.sum() < 2:
+            return (np.nan, np.nan, np.nan, np.nan, np.nan)
+        
+        res = stats.linregress(x1[mask], y1[mask])
+        return (res.slope, res.intercept, res.rvalue, res.pvalue, res.stderr)
+
+    return xr.apply_ufunc(
+        linregress_nan, x, y,
+        input_core_dims=[[dim], [dim]],
+        output_core_dims=[[], [], [], [], []],
+        vectorize=True
+    )
+
 def annual_selection2(ds, iyr=1979, fyr=2005):
     """
     Compute annual means from monthly data.
