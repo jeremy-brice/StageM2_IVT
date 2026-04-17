@@ -65,11 +65,16 @@ Hi1 = z_shift.isel(pressure_level=idx)
 # FLH interpolation entre les deux niveaux de pression trouvé juste avant
 FLH = Hi + Ti * (Hi1 - Hi) / (Ti - Ti1)
 
-eps = 1e-6
+eps = 0.1
 FLH = xr.where(abs(Ti - Ti1) > eps, FLH, np.nan) # évite la division par zéro au cas où (numériquement ici très proche de zéro = instable)
 
 # Vérification si il y a bien le crossing qui existe
 FLH = FLH.where(crossing.any(dim="pressure_level")) # si pas de crossing par température 0 alors argmax=0 et donc il faut mettre NaN
+FLH = FLH.where(t.max(dim="pressure_level") > 0) # Si toute la colonne > 0 °C
+FLH = FLH.where(t.min(dim="pressure_level") < 0) # Si toute la colonne < 0 °C
+
+#Enlève les valeurs abberantes à cause de la façon dont on calcule
+FLH = xr.where(FLH > 10000, np.nan, FLH)
 
 #========================== Saving Files ==================================
 
