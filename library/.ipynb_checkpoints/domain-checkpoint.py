@@ -77,11 +77,11 @@ def coord_domain(domain):
     elif domain in ['SL']:
         latS = 29;latN = 36;lonW=76;lonE=80
         
-    elif domain in ['MARMer','GRa']:
-        latS = 25;latN = 31;lonW=80;lonE=90
-        
-    elif domain in ['MARFed','GRf']:
-        latS = 36;latN = 41;lonW=67;lonE=78
+    elif domain in ['GRp']:
+        latS = 36.19;latN = 41.38;lonW=67.53;lonE=77.16
+
+    elif domain in ['GRq']:
+        latS = 25.92;latN = 31.10;lonW=81.76;lonE=90.20
         
     else:
         raise ValueError(
