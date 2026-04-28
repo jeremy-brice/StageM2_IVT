@@ -82,6 +82,42 @@ def coord_domain(domain):
 
     elif domain in ['GRq']:
         latS = 25.92;latN = 31.10;lonW=81.76;lonE=90.20
+
+    elif domain in ['Tien Shan']:
+        latS = 39.33;latN = 46.02;lonW=69.31;lonE=88.70
+
+    elif domain in ['Hundu-Kush']:
+        latS = 34.86;latN = 37.49;lonW=69.27;lonE=74.65
+
+    elif domain in ['Pamir']:
+        latS = 37.19;latN = 39.67;lonW=70.47;lonE=75.06
+
+    elif domain in ['Spiti-Lahul']:
+        latS = 31.04;latN = 35.84;lonW=72.86;lonE=80.95
+
+    elif domain in ['Karakoram']:
+        latS = 33.70;latN = 38.20;lonW=73.74;lonE=79.26
+
+    elif domain in ['West-Nepal']:
+        latS = 27.97;latN = 31.85;lonW=77.63;lonE=84.11
+
+    elif domain in ['Bhutan']:
+        latS = 27.15;latN = 29.89;lonW=88.89;lonE=95.44
+
+    elif domain in ['Everest']:
+        latS = 27.11;latN = 29.58;lonW=83.57;lonE=89.39
+
+    elif domain in ['Nayainqentangla']:
+        latS = 27.77;latN = 31.53;lonW=91.73;lonE=98.32
+
+    elif domain in ['Pamir-Altai']:
+        latS = 37.47;latN = 40.41;lonW=66.02;lonE=75.10
+
+    elif domain in ['Kunlun']:
+        latS = 35.01;latN = 39.67;lonW=73.10;lonE=85.64
+
+    elif domain in ['TP2']:
+        latS = 27.64;latN = 39.81;lonW=77.52;lonE=103.32
         
     else:
         raise ValueError(
