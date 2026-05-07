@@ -40,6 +40,8 @@ domains = ['Eastern Hindu Kush',
             'Central Tien Shan', 
             'Eastern Pamir']
 
+path = '/bettik/PROJECTS/pr-regional-climate/bricej/era5/monthly/'
+
 files = {'t2m': 't2m_monthly_era5_1940-2025_NH_025x025.nc',
         'FLH': 'FLH_monthly_era5_1940-2025_MA_025x025.nc',
         'tcwv': 'tcwv_monthly_era5_1940-2025_NH_025x025.nc',
@@ -49,7 +51,8 @@ files = {'t2m': 't2m_monthly_era5_1940-2025_NH_025x025.nc',
         'sf': 'sf_MA_1940-2025_ERA5.nc',
         'rf': 'rf_MA_1940-2025_ERA5.nc'}
 
-file = files[var]
+if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
+    file = files[var]
 
 
 # ============================================ data ===============================================
@@ -67,24 +70,71 @@ if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
     for dom in domains:
         data[dom] = himap(data_var, dom)
 
+
+elif var == 'R':
+    data['sf'] = {}
+    data['tp'] = {}
+    
+    sf = xr.open_dataset(path + files['sf'])['sf']
+    tp = xr.open_dataset(path + files['tp'])['tp']
+    
+    sf = sf.sel(time=slice(str(iyear),str(fyear)))
+    tp = tp.sel(time=slice(str(iyear),str(fyear)))
+
+    sf = field_dom(sf, 'HMA')
+    tp = field_dom(tp, 'HMA')
+
+    for dom in domains:
+        data['sf'][dom] = himap(sf, dom)
+        data['tp'][dom] = himap(tp, dom)
+    
+
 # ============================================ annual selection ===============================================
 
 data_annual = {}
 
-for dom in domains:
-    data_annual[dom] = data[dom].groupby('time.year').mean(dim='time', skipna=True)
-    data_annual[dom] = data_annual[dom].mean(dim=['lat','lon'], skipna=True)
+if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
+
+    for dom in domains:
+        data_annual[dom] = data[dom].groupby('time.year').mean(dim='time', skipna=True)
+        data_annual[dom] = data_annual[dom].mean(dim=['lat','lon'], skipna=True)
+
+
+elif var == 'R':
+    data_annual['sf'] = {}
+    data_annual['tp'] = {}
+    data_annual['R'] = {}
+    for dom in domains:
+        data_annual['sf'][dom] = data['sf'][dom].groupby('time.year').mean(dim='time', skipna=True)
+        data_annual['sf'][dom] = data_annual['sf'][dom].mean(dim=['lat','lon'], skipna=True)
+
+        data_annual['tp'][dom] = data['tp'][dom].groupby('time.year').mean(dim='time', skipna=True)
+        data_annual['tp'][dom] = data_annual['tp'][dom].mean(dim=['lat','lon'], skipna=True)
+
+        data_annual['R'][dom] = data_annual['sf'][dom] / data_annual['tp'][dom] * 100
 
 # ============================================ trends ===============================================
 
 trend = {}
 
-for dom in domains:
-    trend[dom] = stats.linregress(
-                data_annual[dom].year.values,
-                data_annual[dom].values
-            )
+if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
+    for dom in domains:
+        trend[dom] = stats.linregress(
+                    data_annual[dom].year.values,
+                    data_annual[dom].values
+                )
 
+elif var == 'R':
+    for dom in domains:
+        trend[dom] = stats.linregress(
+                    data_annual['R'][dom].year.values,
+                    data_annual['R'][dom].values
+                )
+
+# percentage trends
+
+trend = {}
+        
 # ============================================ saving file ===============================================
 
 rows = []

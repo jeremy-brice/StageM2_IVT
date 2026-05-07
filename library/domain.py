@@ -1,5 +1,6 @@
 import xarray as xr
 import geopandas as gpd
+import numpy as np
 import regionmask
 
 def reversing_lat(ds):
@@ -220,4 +221,83 @@ def himap(ds, domain):
     )
     
     return ds_region
-    
+
+
+def himap_grouped(ds, domain_group):
+    """
+    Sélectionne un groupe de régions HMA.
+
+    Parameters
+    ----------
+    domain_group : str
+        Nom du groupe : "Tien Shan", "Pamir Alay", "Pamir", "Hindu Kush", "Karakoram", "Kunlun", "Spiti Lahaul", "Central Himalaya", "Bhutan", "Nyainqentangla", "Inner TP")
+    ds : xarray.Dataset or DataArray
+
+    Returns
+    -------
+    ds_region : Dataset/DataArray
+    """
+
+    # Détection des dimensions
+    lat_str = ''
+    lon_str = ''
+    other_dims_str = []
+    for dim in ds.dims:
+        if dim in ['lat', 'latitude','LAT']:
+            lat_str = dim
+        elif dim in ['lon', 'longitude','LON']:
+            lon_str = dim
+        else:
+            other_dims_str.append(dim)
+
+    # Grouped regions
+    region_groups = {
+        "Tien Shan": [
+            "Eastern Tien Shan", "Dzhungarsky Alatau",
+            "Northern/Western Tien Shan", "Central Tien Shan"
+        ],
+        "Pamir Alay": ["Pamir Alay"],
+        "Pamir": ["Western Pamir"],
+        "Hindu Kush": ["Eastern Hindu Kush"],
+        "Karakoram": ["Karakoram"],
+        "Kunlun": ["Eastern Pamir", "Western Kunlun Shan"],
+        "Spiti Lahaul": ["Western Himalaya"],
+        "Central Himalaya": ["Central Himalaya"],
+        "Bhutan": ["Eastern Himalaya"],
+        "Nyainqentangla": ["Nyainqentanglha"],
+        "Inner TP": [
+            "Gangdise Mountains", "Tibetan Interior Mountains",
+            "Eastern Kunlun Shan", "Altun Shan", "Hengduan Shan",
+            "Tanggula Shan", "Eastern Tibetan Mountains", "Qilian Shan"
+        ]
+    }
+
+    # Charger shapefile
+    shp_path = '/bettik/PROJECTS/pr-regional-climate/bricej/HMA_regions_Bolch/boundary_mountain_regions_hma_v3.shp'
+    shp = gpd.read_file(shp_path)
+
+    if shp.crs != "EPSG:4326":
+        shp = shp.to_crs("EPSG:4326")
+
+    # Sélection multiple des régions
+    region = shp[shp["Primary_ID"].isin(region_groups[domain_group])]
+
+    # Masque
+    regions = regionmask.Regions(region.geometry.values)
+    mask = regions.mask(ds)
+    ds = ds.where(~np.isnan(mask)) # permet de garder toutes les régions dans la région voulue
+
+    # Limites box globale du groupe
+    lonW, latS, lonE, latN = region.total_bounds
+
+    if ds[lat_str][0] > ds[lat_str][-1]:
+        lat_slice = slice(latN, latS) # décroissant 
+    else:
+        lat_slice = slice(latS, latN) # croissant
+
+    ds_region = ds.sel({
+        lat_str: lat_slice,
+        lon_str: slice(lonW, lonE)
+    })
+
+    return ds_region
