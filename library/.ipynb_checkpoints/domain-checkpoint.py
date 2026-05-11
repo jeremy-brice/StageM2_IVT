@@ -301,3 +301,61 @@ def himap_grouped(ds, domain_group):
     })
 
     return ds_region
+
+def himap_grouped2(ds, domain):
+    """
+        Get the data for the corresponding zone.
+        Parameters
+        ----------
+        domain : str
+            Zone name. Options are:
+            "Tien Shan", "Pamir Alay", "Pamir", "Hindu Kush", "Karakoram", "Kunlun", "Spiti Lahaul", "Central Himalaya", "Bhutan", "Nyainqentangla", "Inner TP".
+        ds : xarray.Dataset (or xarray.DataArray ?) 
+        
+        Returns
+        -------
+        ds_region : slice
+            Data only in the wanted zone, elsewhere is NaN values.
+            A grid cannot be in two different regions. 
+            But some of the grids at the limits can be a little bit in the other region just next to the one chosen.
+        -------
+    """
+
+    lat_str = ''
+    lon_str = ''
+    other_dims_str = []
+    for dim in ds.dims:
+        if dim in ['lat', 'latitude','LAT']:
+            lat_str = dim
+        elif dim in ['lon', 'longitude','LON']:
+            lon_str = dim
+        else:
+            other_dims_str.append(dim)
+    
+    # Shapefile for the different regions
+    shp_path = '/bettik/PROJECTS/pr-regional-climate/bricej/HIMAP_grouped_regions/himap_grouped_regions.shp'
+    shp = gpd.read_file(shp_path)
+
+    if shp.crs != "EPSG:4326":
+        shp = shp.to_crs("EPSG:4326")
+
+    region = shp[shp["Primary_ID"] == domain]
+
+    # masque précis
+    regions = regionmask.Regions(region.geometry.values) # polygone de la région
+    mask = regions.mask(ds) # masque NaN ou zéro si dans le masque
+    
+    ds = ds.where(mask == 0) # mask == 0 créer un masque booléen True/False pour extraire seulement la région voulue
+
+    # découpe la zone pour alléger le dataset
+    lonW, latS, lonE, latN = region.total_bounds
+    if ds[lat_str][0] > ds[lat_str][-1]:
+        lat_slice = slice(latN, latS)  # décroissant
+    else:
+        lat_slice = slice(latS, latN)  # croissant
+    ds_region = ds.sel(
+        {lat_str: lat_slice,
+         lon_str: slice(lonW, lonE)}
+    )
+    
+    return ds_region

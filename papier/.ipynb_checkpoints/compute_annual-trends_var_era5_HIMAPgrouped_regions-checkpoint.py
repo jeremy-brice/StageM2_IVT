@@ -60,8 +60,8 @@ elif var == 'R':
     sf = sf.sel(time=slice(str(iyear),str(fyear)))
     tp = tp.sel(time=slice(str(iyear),str(fyear)))
 
-    sf = field_dom(sf, 'HMA')
-    tp = field_dom(tp, 'HMA')
+    sf = field_dom(sf, 'MA')
+    tp = field_dom(tp, 'MA')
 
     for dom in domains:
         data['sf'][dom] = himap_grouped(sf, dom)

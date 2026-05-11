@@ -65,7 +65,7 @@ if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
     if var in ['t2m', 'tcwv', 'ivt', 'vimd']:
         data_var = data_var.rename({'valid_time': 'time','latitude':'lat','longitude':'lon'})
     data_var = data_var.sel(time=slice(str(iyear),str(fyear)))
-    data_var = field_dom(data_var, 'HMA')
+    data_var = field_dom(data_var, 'MA')
         
     for dom in domains:
         data[dom] = himap(data_var, dom)
@@ -81,8 +81,8 @@ elif var == 'R':
     sf = sf.sel(time=slice(str(iyear),str(fyear)))
     tp = tp.sel(time=slice(str(iyear),str(fyear)))
 
-    sf = field_dom(sf, 'HMA')
-    tp = field_dom(tp, 'HMA')
+    sf = field_dom(sf, 'MA')
+    tp = field_dom(tp, 'MA')
 
     for dom in domains:
         data['sf'][dom] = himap(sf, dom)
