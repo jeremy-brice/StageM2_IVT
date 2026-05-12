@@ -131,39 +131,68 @@ elif var == 'R':
                     data_annual['R'][dom].values
                 )
 
-# percentage trends
+# ============================================ percentage trends ===============================================
 
-trend = {}
-        
+trend_percentage = {}
+
+if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
+    for dom in domains:
+        mean_val = data_annual[dom].mean(skipna=True).item()
+
+        if mean_val != 0: # vérification si la mean value est diffférent de zéro
+            slope_pct = (trend[dom].slope / mean_val) * 100
+            stderr_pct = (trend[dom].stderr / mean_val) * 100
+
+        else: # mettre NaN si mean value est égal à zéro
+            slope_pct = np.nan
+            stderr_pct = np.nan
+
+        trend_percentage[dom] = {
+            'slope': slope_pct,
+            'intercept': trend[dom].intercept,
+            'rvalue': trend[dom].rvalue,
+            'pvalue': trend[dom].pvalue,
+            'stderr': stderr_pct
+        }
+
+elif var == 'R':
+    for dom in domains:
+        mean_val = data_annual['R'][dom].mean(skipna=True).item()
+
+        if mean_val != 0:
+            slope_pct = (trend[dom].slope / mean_val) * 100
+            stderr_pct = (trend[dom].stderr / mean_val) * 100
+
+        else:
+            slope_pct = np.nan
+            stderr_pct = np.nan
+
+        trend_percentage[dom] = {
+            'slope': slope_pct,
+            'intercept': trend[dom].intercept,
+            'rvalue': trend[dom].rvalue,
+            'pvalue': trend[dom].pvalue,
+            'stderr': stderr_pct
+        }
+
 # ============================================ saving file ===============================================
 
 rows = []
 
-for region, res in trend.items():
-    if isinstance(res, float) and np.isnan(res):
-        # cas où NaN (pas assez de données pour avoir une trend)
-        rows.append({
-            "region": region,
-            "slope": np.nan,
-            "intercept": np.nan,
-            "rvalue": np.nan,
-            "pvalue": np.nan,
-            "stderr": np.nan
-        })
-    else:
-        rows.append({
-            "region": region,
-            "slope": res.slope,
-            "intercept": res.intercept,
-            "rvalue": res.rvalue,
-            "pvalue": res.pvalue,
-            "stderr": res.stderr
-        })
+for region, res in trend_percentage.items():
+
+    rows.append({
+    "region": region,
+    "slope": res['slope'],
+    "intercept": res['intercept'],
+    "rvalue": res['rvalue'],
+    "pvalue": res['pvalue'],
+    "stderr": res['stderr']})
 
 df = pd.DataFrame(rows)
 
 path = '/bettik/PROJECTS/pr-regional-climate/bricej/paper/'
-filename = f"{var}_era5_trends_HIMAP_regions_{iyear}-{fyear}.csv"
+filename = f"{var}_era5_percentage_trends_HIMAP_regions_{iyear}-{fyear}.csv"
 
 df.to_csv(path + filename, index=False)
 

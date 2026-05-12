@@ -1,5 +1,6 @@
 import sys
 sys.path.insert(1, '/home/bricej/MyPythonLibrary/StageM2_IVT/library/')
+import ast
 import domain
 from domain import *
 from climbas import *
@@ -9,36 +10,17 @@ import xarray as xr
 import pandas as pd
 from netCDF4 import Dataset
 import dask
+from scipy import stats
 
 # Arguments
 iyear = int(sys.argv[1])
 fyear = int(sys.argv[2])
 var   = sys.argv[3]
+months = ast.literal_eval(sys.argv[4]) # give type season = [1,2,3] for JFM or for one month January give [1]
 
 # ============================================ regions & file of var ===============================================
 
-domains = ['Eastern Hindu Kush', 
-            'Western Himalaya', 
-            'Eastern Himalaya',
-            'Central Himalaya', 
-            'Karakoram', 
-            'Western Pamir', 
-            'Pamir Alay', 
-            'Northern/Western Tien Shan', 
-            'Dzhungarsky Alatau', 
-            'Western Kunlun Shan', 
-            'Nyainqentanglha', 
-            'Gangdise Mountains', 
-            'Hengduan Shan', 
-            'Tibetan Interior Mountains', 
-            'Tanggula Shan', 
-            'Eastern Tibetan Mountains', 
-            'Qilian Shan', 
-            'Eastern Kunlun Shan', 
-            'Altun Shan', 
-            'Eastern Tien Shan', 
-            'Central Tien Shan', 
-            'Eastern Pamir']
+domains = ["Tien Shan", "Pamir Alay", "Pamir", "Hindu Kush", "Karakoram", "Kunlun", "Spiti Lahaul", "Central Himalaya", "Bhutan", "Nyainqentangla", "Inner TP"]
 
 path = '/bettik/PROJECTS/pr-regional-climate/bricej/era5/monthly/'
 
@@ -65,10 +47,10 @@ if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
     if var in ['t2m', 'tcwv', 'ivt', 'vimd']:
         data_var = data_var.rename({'valid_time': 'time','latitude':'lat','longitude':'lon'})
     data_var = data_var.sel(time=slice(str(iyear),str(fyear)))
-    data_var = field_dom(data_var, 'HMA')
+    data_var = field_dom(data_var, 'MA')
         
     for dom in domains:
-        data[dom] = himap(data_var, dom)
+        data[dom] = himap_grouped2(data_var, dom)
 
 
 elif var == 'R':
@@ -81,37 +63,38 @@ elif var == 'R':
     sf = sf.sel(time=slice(str(iyear),str(fyear)))
     tp = tp.sel(time=slice(str(iyear),str(fyear)))
 
-    sf = field_dom(sf, 'HMA')
-    tp = field_dom(tp, 'HMA')
+    sf = field_dom(sf, 'MA')
+    tp = field_dom(tp, 'MA')
 
     for dom in domains:
-        data['sf'][dom] = himap(sf, dom)
-        data['tp'][dom] = himap(tp, dom)
+        data['sf'][dom] = himap_grouped2(sf, dom)
+        data['tp'][dom] = himap_grouped2(tp, dom)
     
 
-# ============================================ annual selection ===============================================
+# ============================================ monthly selection ===============================================
 
-data_annual = {}
+data_monthly = {}
 
 if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
 
     for dom in domains:
-        data_annual[dom] = data[dom].groupby('time.year').mean(dim='time', skipna=True)
-        data_annual[dom] = data_annual[dom].mean(dim=['lat','lon'], skipna=True)
+        monthly_selection_var = seasonal_selection2(data[dom], season_months=months, iyr=iyear, fyr=fyear)
+        data_monthly[dom] = monthly_selection_var.mean(dim=['lat','lon'], skipna=True)
 
 
 elif var == 'R':
-    data_annual['sf'] = {}
-    data_annual['tp'] = {}
-    data_annual['R'] = {}
+    data_monthly['sf'] = {}
+    data_monthly['tp'] = {}
+    data_monthly['R'] = {}
     for dom in domains:
-        data_annual['sf'][dom] = data['sf'][dom].groupby('time.year').mean(dim='time', skipna=True)
-        data_annual['sf'][dom] = data_annual['sf'][dom].mean(dim=['lat','lon'], skipna=True)
+        monthly_selection_var1 = seasonal_selection2(data['sf'][dom], season_months=months, iyr=iyear, fyr=fyear)
+        data_monthly['sf'][dom] = monthly_selection_var1.mean(dim=['lat','lon'], skipna=True)
 
-        data_annual['tp'][dom] = data['tp'][dom].groupby('time.year').mean(dim='time', skipna=True)
-        data_annual['tp'][dom] = data_annual['tp'][dom].mean(dim=['lat','lon'], skipna=True)
+        monthly_selection_var2 = seasonal_selection2(data['tp'][dom], season_months=months, iyr=iyear, fyr=fyear)
+        data_monthly['tp'][dom] = monthly_selection_var2.mean(dim=['lat','lon'], skipna=True)
 
-        data_annual['R'][dom] = data_annual['sf'][dom] / data_annual['tp'][dom] * 100
+        tp_safe = data_monthly['tp'][dom].where(data_monthly['tp'][dom] != 0) # verification que tp different de zéro (NaN si c'est le cas)
+        data_monthly['R'][dom] = data_monthly['sf'][dom] / tp_safe * 100
 
 # ============================================ trends ===============================================
 
@@ -120,16 +103,25 @@ trend = {}
 if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
     for dom in domains:
         trend[dom] = stats.linregress(
-                    data_annual[dom].year.values,
-                    data_annual[dom].values
+                    data_monthly[dom].time.values,
+                    data_monthly[dom].values
                 )
 
 elif var == 'R':
     for dom in domains:
-        trend[dom] = stats.linregress(
-                    data_annual['R'][dom].year.values,
-                    data_annual['R'][dom].values
-                )
+        x = data_monthly['R'][dom].time.values
+        y = data_monthly['R'][dom].values
+
+        # enlever les NaN
+        mask = np.isfinite(y)
+        x_valid = x[mask]
+        y_valid = y[mask]
+
+        # minimum 5 valeurs valides pour faire une trend si non que des NaN
+        if len(y_valid) >= 5:
+            trend[dom] = stats.linregress(x_valid,y_valid)
+        else:
+            trend[dom] = np.nan
 
 # ============================================ percentage trends ===============================================
 
@@ -137,7 +129,7 @@ trend_percentage = {}
 
 if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
     for dom in domains:
-        mean_val = data_annual[dom].mean(skipna=True).item()
+        mean_val = data_monthly[dom].mean(skipna=True).item()
 
         if mean_val != 0: # vérification si la mean value est diffférent de zéro
             slope_pct = (trend[dom].slope / mean_val) * 100
@@ -157,7 +149,7 @@ if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
 
 elif var == 'R':
     for dom in domains:
-        mean_val = data_annual['R'][dom].mean(skipna=True).item()
+        mean_val = data_monthly['R'][dom].mean(skipna=True).item()
 
         if mean_val != 0:
             slope_pct = (trend[dom].slope / mean_val) * 100
@@ -174,25 +166,38 @@ elif var == 'R':
             'pvalue': trend[dom].pvalue,
             'stderr': stderr_pct
         }
-
+        
 # ============================================ saving file ===============================================
 
 rows = []
 
 for region, res in trend_percentage.items():
-
-    rows.append({
-    "region": region,
-    "slope": res['slope'],
-    "intercept": res['intercept'],
-    "rvalue": res['rvalue'],
-    "pvalue": res['pvalue'],
-    "stderr": res['stderr']})
+    if isinstance(res, float) and np.isnan(res):
+        # cas où NaN (pas assez de données pour avoir une trend)
+        rows.append({
+            "region": region,
+            "slope": np.nan,
+            "intercept": np.nan,
+            "rvalue": np.nan,
+            "pvalue": np.nan,
+            "stderr": np.nan
+        })
+    else:
+        rows.append({
+        "region": region,
+        "slope": res['slope'],
+        "intercept": res['intercept'],
+        "rvalue": res['rvalue'],
+        "pvalue": res['pvalue'],
+        "stderr": res['stderr']})
 
 df = pd.DataFrame(rows)
 
+name_months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+month_label = '_'.join([name_months[m-1] for m in months]) # ça donne : [1] -> 'Jan'; ou [1,2,3] -> 'Jan_Feb_Mar'
+
 path = '/bettik/PROJECTS/pr-regional-climate/bricej/paper/'
-filename = f"{var}_era5_percentage_trends_HIMAP_regions_{iyear}-{fyear}.csv"
+filename = f"{var}_era5_{month_label}_percentage_trends_HIMAPgrouped_regions_{iyear}-{fyear}.csv"
 
 df.to_csv(path + filename, index=False)
 

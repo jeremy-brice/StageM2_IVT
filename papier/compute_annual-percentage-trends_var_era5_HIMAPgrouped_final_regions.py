@@ -17,28 +17,7 @@ var   = sys.argv[3]
 
 # ============================================ regions & file of var ===============================================
 
-domains = ['Eastern Hindu Kush', 
-            'Western Himalaya', 
-            'Eastern Himalaya',
-            'Central Himalaya', 
-            'Karakoram', 
-            'Western Pamir', 
-            'Pamir Alay', 
-            'Northern/Western Tien Shan', 
-            'Dzhungarsky Alatau', 
-            'Western Kunlun Shan', 
-            'Nyainqentanglha', 
-            'Gangdise Mountains', 
-            'Hengduan Shan', 
-            'Tibetan Interior Mountains', 
-            'Tanggula Shan', 
-            'Eastern Tibetan Mountains', 
-            'Qilian Shan', 
-            'Eastern Kunlun Shan', 
-            'Altun Shan', 
-            'Eastern Tien Shan', 
-            'Central Tien Shan', 
-            'Eastern Pamir']
+domains = ["Tien Shan", "Pamir Alay", "Pamir", "Hindu Kush", "Karakoram", "Kunlun", "Spiti Lahaul", "Central Himalaya", "Bhutan", "Nyainqentangla", "Inner TP"]
 
 path = '/bettik/PROJECTS/pr-regional-climate/bricej/era5/monthly/'
 
@@ -65,10 +44,10 @@ if var in ['t2m','FLH','tcwv','ivt','vimd','tp','sf','rf']:
     if var in ['t2m', 'tcwv', 'ivt', 'vimd']:
         data_var = data_var.rename({'valid_time': 'time','latitude':'lat','longitude':'lon'})
     data_var = data_var.sel(time=slice(str(iyear),str(fyear)))
-    data_var = field_dom(data_var, 'HMA')
+    data_var = field_dom(data_var, 'MA')
         
     for dom in domains:
-        data[dom] = himap(data_var, dom)
+        data[dom] = himap_grouped2(data_var, dom)
 
 
 elif var == 'R':
@@ -81,12 +60,12 @@ elif var == 'R':
     sf = sf.sel(time=slice(str(iyear),str(fyear)))
     tp = tp.sel(time=slice(str(iyear),str(fyear)))
 
-    sf = field_dom(sf, 'HMA')
-    tp = field_dom(tp, 'HMA')
+    sf = field_dom(sf, 'MA')
+    tp = field_dom(tp, 'MA')
 
     for dom in domains:
-        data['sf'][dom] = himap(sf, dom)
-        data['tp'][dom] = himap(tp, dom)
+        data['sf'][dom] = himap_grouped2(sf, dom)
+        data['tp'][dom] = himap_grouped2(tp, dom)
     
 
 # ============================================ annual selection ===============================================
@@ -192,7 +171,7 @@ for region, res in trend_percentage.items():
 df = pd.DataFrame(rows)
 
 path = '/bettik/PROJECTS/pr-regional-climate/bricej/paper/'
-filename = f"{var}_era5_percentage_trends_HIMAP_regions_{iyear}-{fyear}.csv"
+filename = f"{var}_era5_percentage_trends_HIMAPgrouped_regions_{iyear}-{fyear}.csv"
 
 df.to_csv(path + filename, index=False)
 
