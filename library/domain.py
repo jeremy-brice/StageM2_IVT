@@ -69,13 +69,13 @@ def coord_domain(domain):
         latS = 34;latN = 45;lonW=60;lonE=76
         
     elif domain in ['CH']:
-        latS = 23;latN = 30.5;lonW=80;lonE=91.5
+        latS = 26;latN = 30.5;lonW=80;lonE=91.5
         
     elif domain in ['TP']:
         latS = 30.5;latN = 38;lonW=80;lonE=102
         
     elif domain in ['SEH']:
-        latS = 20;latN = 30;lonW=91.5;lonE=110
+        latS = 20;latN = 30.5;lonW=91.5;lonE=110
         
     elif domain in ['SL']:
         latS = 29;latN = 36;lonW=76;lonE=80
