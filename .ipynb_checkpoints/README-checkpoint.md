@@ -25,4 +25,4 @@ The other files are all the notebooks or python files that were coded during the
 - **papier** : everything related to glacier evolution. Regional definition, glacier evolution, atmospheric drivers.
 - **spatial_temporal_coverage_observations_datasets** : data directly available in the observational precipitation datasets (APHRO, CRU, GPCP) for spatial and temporal station coverage.
 - **time_series** : time series for the different variables used in the study.
-- **MAR** : little study about MAR in the region. Climatology and trends of precipitation temperature, and surface mass balance in Nepal and the Pamir.
+- **MAR** : little study about MAR in the region. Climatology and trends of precipitation, temperature, and glacier surface mass balance in Nepal and the Pamir.
